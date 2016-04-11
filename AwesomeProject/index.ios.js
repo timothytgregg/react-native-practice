@@ -1,44 +1,87 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- */
-
 import React, {
   AppRegistry,
   Component,
   Image,
+  ListView,
   StyleSheet,
   Text,
-  View
+  View,
 } from 'react-native';
 
-const API_KEY='ahypqubjven2ybh9a67nmuqp';
-const API_URL = 'http://api.rottentomatoes.com/api/public/v1.0/lists/movies/in_theaters.json';
-const PAGE_SIZE = 25;
-const PARAMS = '?apikey=' + API_KEY + '&page_limit=' + PAGE_SIZE;
-const REQUEST_URL = API_URL + PARAMS;
-
-const MOCKED_MOVIES_DATA = [
-  {title: 'Title', year: '2015', posters: {thumbnail: 'http://i.imgur.com/UePbdph.jpg'}},
-];
+var API_KEY = 'ahypqubjven2ybh9a67nmuqp';
+var API_URL = 'http://api.rottentomatoes.com/api/public/v1.0/lists/movies/in_theaters.json';
+var PAGE_SIZE = 25;
+var PARAMS = '?apikey=' + API_KEY + '&page_limit=' + PAGE_SIZE;
+var REQUEST_URL = 'https://raw.githubusercontent.com/facebook/react-native/master/docs/MoviesExample.json';
 
 class AwesomeProject extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      dataSource: new ListView.DataSource({
+        rowHasChanged: (row1, row2) => row1 !== row2,
+      }),
+      loaded: false,
+    };
+  }
+
+  componentDidMount() {
+    this.fetchData();
+  }
+
+  fetchData() {
+    fetch(REQUEST_URL)
+      .then((response) => response.json())
+      .then((responseData) => {
+        this.setState({
+          dataSource: this.state.dataSource.cloneWithRows(responseData.movies),
+          loaded: true,
+        });
+      })
+      .done();
+  }
+
   render() {
-    const movie = MOCKED_MOVIES_DATA[0];
-    return(
+    if (!this.state.loaded) {
+      return this.renderLoadingView();
+    }
+
+    return (
+      <ListView
+        dataSource={this.state.dataSource}
+        renderRow={this.renderMovie}
+        style={styles.listView}
+      />
+    );
+  }
+
+  renderLoadingView() {
+    return (
       <View style={styles.container}>
-        <Image source={{uri:movie.posters.thumbnail}}
-        style={styles.thumbnail}/>
+        <Text>
+          Loading movies...
+        </Text>
+      </View>
+    );
+  }
+
+  renderMovie(movie) {
+    return (
+      <View style={styles.container}>
+        <Image
+          source={{uri: movie.posters.thumbnail}}
+          style={styles.thumbnail}
+        />
         <View style={styles.rightContainer}>
           <Text style={styles.title}>{movie.title}</Text>
           <Text style={styles.year}>{movie.year}</Text>
         </View>
       </View>
-    )
+    );
   }
 }
 
-const styles = StyleSheet.create({
+var styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'row',
@@ -47,7 +90,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5FCFF',
   },
   rightContainer: {
-    flex: 1
+    flex: 1,
   },
   title: {
     fontSize: 20,
@@ -55,11 +98,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   year: {
-    textAlign: 'center'
+    textAlign: 'center',
   },
   thumbnail: {
     width: 53,
     height: 81,
+  },
+  listView: {
+    paddingTop: 20,
+    backgroundColor: '#F5FCFF',
   },
 });
 
